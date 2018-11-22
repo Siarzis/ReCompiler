@@ -12,7 +12,11 @@
 #define T_reference 1010
 %}
 
-DIGIT [0-9]
+CONST [0-9]
+NAME [a-zA-Z][a-zA-Z0-9_]*
+OP "="|"+"|"-"|"*"|"/"|"%"|"!"|"&"|"|"|"=="|"!="|"<"|">"|"<="|">="
+OPERATOR [!%&*+/=|]|"-"|"=="|"!="|"<"|">"|"<="|">="
+SEPARATOR [(),:;{}]|"["|"]"
 
 %%
 "byte"		{ return T_byte; }
@@ -26,10 +30,12 @@ DIGIT [0-9]
 "return"     	{ return T_return; }
 "reference"     { return T_reference; }
 
-{DIGIT}+	{
-		printf( "An integer was found: %s (%d)\n", yytext, atoi(yytext));
-		}
+{CONST}+	{ printf("A constant was identified: %s\n", yytext); }
+{NAME}		{ printf("A name was found: %s\n", yytext); }
+{OPERATOR}	{ printf("An operator was found: %s\n", yytext); }
+{SEPARATOR}	{ printf("A separator was found: %s\n", yytext); }
 
+\n		{ printf(""); }
 %%
 
 int yywrap(){}
