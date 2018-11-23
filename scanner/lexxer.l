@@ -14,8 +14,8 @@
 
 DIGIT [0-9]
 NAME [a-zA-Z][a-zA-Z0-9_]*
-CHAR "'"[^\\^\"^\']"'"
-STRING "\"".*"\""
+CHAR .|\\[\"'0\\nrt]
+STRING .*
 OPERATOR [!%&*+/=|]|"-"|"=="|"!="|"<"|">"|"<="|">="
 SEPARATOR [(),:;{}]|"["|"]"
 EMPTY [ \n\t\r]
@@ -27,11 +27,10 @@ byte|int|if|else|while|true|false|proc|return|reference	{ printf("A wild keyword
 
 {DIGIT}+	{ printf("A constant was identified: %s\n", yytext); }
 {NAME}		{ printf("A name was found: %s\n", yytext); }
-{CHAR}		{ printf("A char was identified: %s\n", yytext); }
-{STRING}	{ printf("A string was detected: %s\n", yytext); }
+'{CHAR}'	{ printf("A char was identified: %s\n", yytext); }
+\"{STRING}\"	{ printf("A string was detected: %s\n", yytext); }
 {OPERATOR}	{ printf("An operator was found: %s\n", yytext); }
 {SEPARATOR}	{ printf("A separator was found: %s\n", yytext); }
-
 
 {EMPTY}+|{ONELINECOM}|{MULLINECOM}	{ /* should be ingored */ }
 %%
