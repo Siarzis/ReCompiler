@@ -12,35 +12,34 @@
 #define T_reference 1010
 %}
 
-CONST [0-9]
+DIGIT [0-9]
 NAME [a-zA-Z][a-zA-Z0-9_]*
-OP "="|"+"|"-"|"*"|"/"|"%"|"!"|"&"|"|"|"=="|"!="|"<"|">"|"<="|">="
+CHAR "'"[^\\^\"^\']"'"
+STRING "\"".*"\""
 OPERATOR [!%&*+/=|]|"-"|"=="|"!="|"<"|">"|"<="|">="
 SEPARATOR [(),:;{}]|"["|"]"
+EMPTY [ \n\t\r]
+ONELINECOM "--".*"\n"
+MULLINECOM "(*".*"*)"
 
 %%
-"byte"		{ return T_byte; }
-"int"		{ return T_int; }
-"if"		{ return T_if; }
-"else"		{ return T_else; }
-"while"		{ return T_while; }
-"true"		{ return T_true; }
-"false"		{ return T_false; }
-"proc"		{ return T_proc; }
-"return"     	{ return T_return; }
-"reference"     { return T_reference; }
+byte|int|if|else|while|true|false|proc|return|reference	{ printf("A wild keyword appeared: %s\n", yytext); }
 
-{CONST}+	{ printf("A constant was identified: %s\n", yytext); }
+{DIGIT}+	{ printf("A constant was identified: %s\n", yytext); }
 {NAME}		{ printf("A name was found: %s\n", yytext); }
+{CHAR}		{ printf("A char was identified: %s\n", yytext); }
+{STRING}	{ printf("A string was detected: %s\n", yytext); }
 {OPERATOR}	{ printf("An operator was found: %s\n", yytext); }
 {SEPARATOR}	{ printf("A separator was found: %s\n", yytext); }
 
-\n		{ printf(""); }
+
+{EMPTY}+|{ONELINECOM}|{MULLINECOM}	{ /* should be ingored */ }
 %%
 
 int yywrap(){}
 
-int main() {
+int main(int argc, char **argv) {
+	yyin = fopen(argv[1], "r");
 	yylex();
 }
 
