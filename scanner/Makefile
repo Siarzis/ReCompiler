@@ -1,16 +1,20 @@
-.PHONY: all clean
+.PHONY: default clean
 
 CC=gcc
 CFLAGS=-I. -Wall
+DEPS = token.h
+OBJ = main.o lex.yy.o
 
-all: a.out
-
-a.out: lex.yy.c
-	$(CC) $(CFLAGS) -o $@ $<
+default: a.out clean
 
 lex.yy.c: *.l
 	lex $<
 
-clean:
-	rm -f lex.yy.c a.out
+%.o: %.c $(DEPS)
+	$(CC) $(CFLAGS) -c $<
 
+a.out: $(OBJ)
+	$(CC) $^ -o $@ 
+
+clean:
+	rm *.o lex.yy.c
