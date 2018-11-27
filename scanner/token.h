@@ -1,0 +1,21 @@
+typedef enum {
+	T_eof=0,
+	T_KEYWORD,
+	T_CONSTANT,
+	T_NAME,
+	T_CHARACTER,
+	T_STRING,
+	T_OPERATOR,
+	T_SEPARATOR,
+	T_ERROR,
+	T_byte,
+	T_int,
+	T_if,
+	T_else,
+	T_while,
+	T_true,
+	T_false,
+	T_proc,
+	T_return,
+	T_reference
+} token;
