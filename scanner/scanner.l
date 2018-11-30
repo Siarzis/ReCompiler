@@ -3,7 +3,8 @@
 %}
 
 DIGIT [0-9]
-NAME [a-zA-Z][a-zA-Z0-9_]*
+LETTER [a-zA-Z]
+ALPHANUMERIC [a-zA-Z0-9]
 CHAR .|\\[\"'0\\nrt]
 STRING .*
 OPERATOR [!%&*+\-/=|]|==|!=|<|>|<=|>=
@@ -16,9 +17,11 @@ MULLINECOM "(*"(.|\n)*"*)"
 byte|int|if|else|while|true|false|proc|return|reference	{ return T_KEYWORD; }
 
 {DIGIT}+	{ return T_CONSTANT; }
-{NAME}		{ return T_NAME; }
+{LETTER}(_|{ALPHANUMERIC})* { return T_IDENTIFIER; }
+
 '{CHAR}'	{ return T_CHARACTER; }
 \"{STRING}\"	{ return T_STRING; }
+
 {OPERATOR}	{ return T_OPERATOR; }
 {SEPARATOR}	{ return T_SEPARATOR; }
 
@@ -26,6 +29,4 @@ byte|int|if|else|while|true|false|proc|return|reference	{ return T_KEYWORD; }
 
 .	{ printf("lexical error! "); return T_ERROR; }
 %%
-
-int yywrap(){}
 

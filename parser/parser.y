@@ -10,6 +10,14 @@
 %token T_LPAREN
 %token T_RPAREN
 %token T_SEMI
+%token T_KEYWORD
+%token T_CONSTANT
+%token T_IDENTIFIER
+%token T_CHARACTER
+%token T_STRING
+%token T_OPERATOR
+%token T_SEPARATOR
+%token T_ERROR
 
 %%
 
@@ -34,6 +42,8 @@ factor	:
 %%
 
 int yywrap() {}
+
+int yyerror(char *s) {fprintf(stderr, "%s\n",s);}
 
 int main()
 {
