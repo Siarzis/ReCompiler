@@ -1,3 +1,6 @@
+#ifndef __AST_H__
+#define __AST_H__
+
 /* define declarations data structure */
 
 struct decl {
@@ -12,7 +15,7 @@ struct decl {
 
 typedef enum {
 	STMT_DECL,
-	STMT_EXPR,
+	STMT_ASSIGN,
 	STMT_IF_ELSE,
 	STMT_WHILE,
 	STMT_PRINT,
@@ -74,4 +77,13 @@ struct param_list {
 	char *name;
 	struct type *type;
 	struct param_list *next;
-}
+};
+
+struct decl * decl_create(char *name, struct type *type, struct expr *value, struct stmt *code, struct decl *next);
+//struct stmt * stmt_create(stmt_token kind, struct decl *decl, struct expr *init_expr, struct expr *expr, struct expr *next_expr, struct stmt *body, struct stmt *else_body, struct stmt *next)
+struct expr * expr_create(expr_token kind, struct expr *left, struct expr *right)
+struct expr * expr_create_name(const char *name)
+//struct expr * expr_create_int_literal(int i)
+//struct expr * expr_create_string_literal(const char *str)
+
+#endif
