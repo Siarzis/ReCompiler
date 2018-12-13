@@ -26,7 +26,6 @@ typedef enum {
 struct stmt {
 	stmt_token kind;
 	struct decl *decl;
-	struct expr *init_expr;
 	struct expr *expr;
 	struct expr *next_expr;
 	struct stmt *body;
@@ -41,6 +40,19 @@ typedef enum {
 	EXPR_SUB,
 	EXPR_MUL,
 	EXPR_DIV,
+	EXPR_MOD,
+	EXPR_ARRAY,
+	EXPR_CALL,
+	EXPR_ARG,
+	EXPR_AND,
+	EXPR_OR,
+	EXPR_NOT,
+	EXPR_EQ,
+	EXPR_LT,
+	EXPR_GT,
+	EXPR_LE,
+	EXPR_GE,
+	EXPR_NE,
 	EXPR_NAME,
 	EXPR_INT_LITERAL,
 	EXPR_STRING_LITERAL
@@ -80,10 +92,12 @@ struct param_list {
 };
 
 struct decl * decl_create(char *name, struct type *type, struct expr *value, struct stmt *code, struct decl *next);
-//struct stmt * stmt_create(stmt_token kind, struct decl *decl, struct expr *init_expr, struct expr *expr, struct expr *next_expr, struct stmt *body, struct stmt *else_body, struct stmt *next)
-struct expr * expr_create(expr_token kind, struct expr *left, struct expr *right)
-struct expr * expr_create_name(const char *name)
-//struct expr * expr_create_int_literal(int i)
-//struct expr * expr_create_string_literal(const char *str)
+struct stmt * stmt_create(stmt_token kind, struct decl *decl, struct expr *expr, struct expr *next_expr, struct stmt *body, struct stmt *else_body, struct stmt *next);
+struct expr * expr_create(expr_token kind, struct expr *left, struct expr *right);
+struct expr * expr_create_name(const char *name);
+struct expr * expr_create_int_literal(int i);
+struct expr * expr_create_string_literal(const char *str);
+int stmt_evaluate (struct stmt *s);
+int expr_evaluate (struct expr *e);
 
 #endif
