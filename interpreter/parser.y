@@ -14,6 +14,7 @@ struct decl *parser_result = NULL;
 	struct stmt *stmt;
 	struct expr *expr;
 	struct type *type;
+	struct param_list *param;
 	int n;
 	char *c;
 }
@@ -48,8 +49,17 @@ struct decl *parser_result = NULL;
 
 %type<decl> program
 %type<decl> fnct
-%type<c> data_type
-%type<c> r_type
+%type<param> param_list
+%type<param> opt_comma_param
+%type<param> param_def
+%type<stmt> opt_ref
+%type<param> type
+%type<type> opt_brackets
+%type<type> r_type
+%type<type> data_type
+%type<decl> local_def
+%type<decl> var_def
+%type<type> opt_int_brackets
 %type<stmt> compound_stmt
 %type<stmt> opt_stmt
 %type<stmt> stmt
@@ -60,6 +70,7 @@ struct decl *parser_result = NULL;
 %type<expr> expr
 %type<expr> l_value
 %type<expr> opt_else
+%type<expr> opt_expr_brackets
 %type<expr> cond
 
 %%
@@ -67,46 +78,48 @@ struct decl *parser_result = NULL;
 program : fnct  { parser_result = $1; }
 	;
 
-fnct : T_ID '(' param_list ')' ':' r_type local_def compound_stmt { $$ = decl_create($1, NULL, NULL, $8, NULL); }
+fnct : T_ID '(' param_list ')' ':' r_type local_def compound_stmt { $$ = decl_create($1, create_type(TYPE_FUNCTION, $6, $3), $7, $8, NULL); }
      ;
 
-param_list : /* empty */
-	   | param_def opt_comma_param
+param_list : /* empty */ { $$ = NULL; }
+	   | param_def opt_comma_param { $$ = $1; $1->next = $2; }
 	   ;
 
-opt_comma_param : /* empty */
-		| opt_comma_param ',' param_def
+opt_comma_param : /* empty */ { $$ = NULL; }
+		| ',' param_def opt_comma_param  { $$ = $2; $2->next = $3; }
 		;
 
-param_def : T_ID ':' opt_ref type;
+param_def : T_ID ':' opt_ref type { $$ = create_parameters($1, $4, NULL); }
+	  ;
 
-opt_ref : /* empty */
+opt_ref : /* empty */ { $$ = NULL; }
 	| "reference"
 	;
 
-type : data_type opt_brackets;
+type : data_type opt_brackets { if ($2 == NULL) $$ = $1; else $2->subtype=$1; };
 
-opt_brackets : /* empty */
-	     | '[' ']'
+opt_brackets : /* empty */ { $$ = NULL; }
+	     | '[' ']' { $$ = create_type(TYPE_ARRAY, NULL, NULL); }
 	     ;
 
-r_type : data_type
-       | "proc" { $$ = "void"; }
+r_type : data_type { $$ = $1; }
+       | "proc" { $$ = create_type(TYPE_VOID, NULL, NULL); }
        ;
 
-data_type : "int" { $$ = "int"; }
-	  | "byte" { $$ = "byte"; }
+data_type : "int" { $$ = create_type(TYPE_INT, NULL, NULL); }
+	  | "byte" { $$ = create_type(TYPE_BYTE, NULL, NULL); }
 	  ;
 
-local_def : /* empty */
-	  | local_def fnct
-	  | local_def var_def
+local_def : /* empty */ { $$ = NULL; }
+	  | fnct local_def { $$ = $1; $1->next = $2; }
+	  | var_def local_def { $$ = $1; $1->next = $2; }
 	  ;
 
-var_def : T_ID ':' data_type opt_int_brackets ';' ;
+var_def : T_ID ':' data_type opt_int_brackets ';'  { if ($4 == NULL) $$ = decl_create($1, $3, NULL, NULL, NULL); else {$4->subtype=$1; decl_create($1, $4, NULL, NULL, NULL);} }
+	; 
 
-opt_int_brackets : /* empty */
-		 | '[' T_CONST ']'
+opt_int_brackets : /* empty */ { $$ = NULL; }
+		 | '[' T_CONST ']' { $$ = create_type(TYPE_ARRAY, NULL, NULL); }
 		 ;
 
 compound_stmt : '{' opt_stmt '}' { $$ = $2; }
@@ -118,10 +131,10 @@ opt_stmt : /* empty */ { $$ = NULL; }
 
 stmt : ';'
      | compound_stmt { $$ = $1; }
-     | l_value '=' expr ';' { $$ = stmt_create(STMT_ASSIGN, NULL, $3, $1, NULL, NULL, NULL); }
-     | fnct_call ';' { $$ = stmt_create(STMT_BLOCK, NULL, $1, NULL, NULL, NULL, NULL); }
-     | "if" '(' cond ')' stmt opt_else { $$ = stmt_create(STMT_IF_ELSE, NULL, $3, NULL, $5, $6, NULL); }
-     | "while" '(' cond ')' stmt { $$ = stmt_create(STMT_WHILE, NULL, $3, NULL, $5, NULL, NULL); }
+     | l_value '=' expr ';' { $$ = stmt_create(STMT_ASSIGN, $3, $1, NULL, NULL, NULL); }
+     | fnct_call ';' { $$ = stmt_create(STMT_BLOCK, $1, NULL, NULL, NULL, NULL); }
+     | "if" '(' cond ')' stmt opt_else { $$ = stmt_create(STMT_IF_ELSE, $3, NULL, $5, $6, NULL); }
+     | "while" '(' cond ')' stmt { $$ = stmt_create(STMT_WHILE, $3, NULL, $5, NULL, NULL); }
      | "return" opt_ret_expr ';' { $$ = $2; }
      ;
 
@@ -141,7 +154,7 @@ opt_else : /* empty */ { $$ = NULL; }
 	 ;
 
 opt_ret_expr : /* empty */ { $$ = NULL; }
-	     | expr { $$ = stmt_create(STMT_RETURN, NULL, $1, NULL, NULL, NULL, NULL); }
+	     | expr { $$ = stmt_create(STMT_RETURN, $1, NULL, NULL, NULL, NULL); }
 	     ;
 
 expr : T_CONST { $$ = expr_create_int_literal($1); }
@@ -157,12 +170,12 @@ expr : T_CONST { $$ = expr_create_int_literal($1); }
      | '-' expr { $$ = $2; }
      ;
 
-l_value : T_ID opt_expr_brackets { $$ = expr_create_name($1); }
+l_value : T_ID opt_expr_brackets { if ($2 == NULL) $$ = expr_create_name($1); else $$ = expr_create(EXPR_SUBSCRIPT, expr_create_name($1), $2); }
 	| T_STRING { $$ = expr_create_string_literal($1); }
 	;
 
-opt_expr_brackets : /* empty */
-		  | '[' expr ']'
+opt_expr_brackets : /* empty */ { $$ = NULL; }
+		  | '[' expr ']'  { $$ = $2; }
 		  ;
 
 cond : "true"
@@ -195,7 +208,8 @@ int main()
 	yyin = fopen("input.txt","r");
 	if (yyparse()==0) {
 		printf("Parse successful!\n");
-		printf("Result: %d\n", stmt_evaluate(parser_result->code));
+		printf("Result: %d\n", 1);
+		decl_print(parser_result);
 	} else {
 		printf("Parse failed.\n");
 	}
