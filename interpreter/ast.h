@@ -6,7 +6,7 @@
 struct decl {
 	char *name;
 	struct type *type;
-	struct expr *value;
+	struct decl *local_decl;
 	struct stmt *code;
 	struct decl *next;
 };
@@ -14,7 +14,6 @@ struct decl {
 /*define statements data structure */
 
 typedef enum {
-	STMT_DECL,
 	STMT_ASSIGN,
 	STMT_IF_ELSE,
 	STMT_WHILE,
@@ -25,7 +24,6 @@ typedef enum {
 
 struct stmt {
 	stmt_token kind;
-	struct decl *decl;
 	struct expr *expr;
 	struct expr *next_expr;
 	struct stmt *body;
@@ -41,7 +39,7 @@ typedef enum {
 	EXPR_MUL,
 	EXPR_DIV,
 	EXPR_MOD,
-	EXPR_ARRAY,
+	EXPR_SUBSCRIPT,
 	EXPR_CALL,
 	EXPR_ARG,
 	EXPR_AND,
@@ -74,7 +72,6 @@ typedef enum {
 	TYPE_VOID,
 	TYPE_INT,
 	TYPE_BYTE,
-	TYPE_STRING,
 	TYPE_ARRAY,
 	TYPE_FUNCTION
 } type_token;
@@ -91,12 +88,14 @@ struct param_list {
 	struct param_list *next;
 };
 
-struct decl * decl_create(char *name, struct type *type, struct expr *value, struct stmt *code, struct decl *next);
-struct stmt * stmt_create(stmt_token kind, struct decl *decl, struct expr *expr, struct expr *next_expr, struct stmt *body, struct stmt *else_body, struct stmt *next);
+struct decl * decl_create(char *name, struct type *type, struct decl *local_decl, struct stmt *code, struct decl *next);
+struct stmt * stmt_create(stmt_token kind, struct expr *expr, struct expr *next_expr, struct stmt *body, struct stmt *else_body, struct stmt *next);
 struct expr * expr_create(expr_token kind, struct expr *left, struct expr *right);
 struct expr * expr_create_name(const char *name);
 struct expr * expr_create_int_literal(int i);
 struct expr * expr_create_string_literal(const char *str);
+struct type * create_type (type_token kind, struct type *subtype, struct param_list *parameters);
+struct param_list * create_parameters (char *name, struct type *type, struct param_list *next);
 int stmt_evaluate (struct stmt *s);
 int expr_evaluate (struct expr *e);
 
