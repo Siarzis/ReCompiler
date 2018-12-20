@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "ast.h"
+#include "hashtable.h"
 
 extern int yylex();
 extern char *yytext;
@@ -16,7 +17,7 @@ struct decl *parser_result = NULL;
 	struct type *type;
 	struct param_list *param;
 	int n;
-	char *c;
+	unsigned char *c;
 }
 
 %token T_byte	"byte"
@@ -208,8 +209,7 @@ int main()
 	yyin = fopen("input.txt","r");
 	if (yyparse()==0) {
 		printf("Parse successful!\n");
-		printf("Result: %d\n", 1);
-		decl_print(parser_result);
+		printf("Result: %d\n", run_interpreter(parser_result));
 	} else {
 		printf("Parse failed.\n");
 	}
