@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ast.h"
+#include "hashtable.h"
+
+hash_table *ht;
 
 struct decl * decl_create(char *name, struct type *type, struct decl *local_decl, struct stmt *code, struct decl *next)
 {
@@ -33,6 +37,7 @@ struct stmt * stmt_create(stmt_token kind, struct expr *expr,
 struct expr * expr_create(expr_token kind, struct expr *left, struct expr *right)
 {
 	struct expr *e = malloc(sizeof(*e));
+
 	e->kind = kind;
 	e->left = left;
 	e->right = right;
@@ -64,35 +69,39 @@ struct expr * expr_create_string_literal(const char *str)
 struct type * create_type (type_token kind, struct type *subtype, struct param_list *parameters)
 {
 	struct type *t = malloc(sizeof(*t));
+
 	t->kind = kind;
 	t->subtype = subtype;
 	t->parameters = parameters;
+
+	return t;
 }
 
 struct param_list * create_parameters (char *name, struct type *type, struct param_list *next)
 {
 	struct param_list *p = malloc(sizeof(*p));
+
 	p->name = name;
 	p->type = type;
 	p->next = next;
+
+	return p;
 }
 
-int decl_print (struct decl *d)
+int decl_evaluate (struct decl *d)
 {
 	if (d == NULL) return 0;
-
+	
 	switch(d->type->kind) {
-	case TYPE_FUNCTION:
-	d = d->local_decl;
-	while (d != NULL) {
-		printf("%s: %d\n", d->name, d->type->kind);
-		d = d->next;
-	}
-	//case TYPE_VOID:
-	//case TYPE_INT:
-	//case TYPE_BYTE:
-	//case TYPE_ARRAY:
-
+		case TYPE_INT:
+		insert(ht, d->name, 0);
+		return decl_evaluate(d->next);
+		case TYPE_BYTE:
+		insert(ht, d->name, 0);
+		return decl_evaluate(d->next);
+		case TYPE_FUNCTION:
+		decl_evaluate(d->local_decl);
+		return stmt_evaluate(d->code);
 	}
 	return 1;
 }
@@ -101,19 +110,20 @@ int stmt_evaluate (struct stmt *s)
 {
 	if (s == NULL) return 0;
 
-	int next = stmt_evaluate(s->next);
-
 	switch(s->kind) {
 		//case STMT_DECL
 		case STMT_ASSIGN:
-			expr_evaluate(s->expr);
+		insert(ht, s->next_expr->name, expr_evaluate(s->expr));
+		printf("%s => %d\n", s->next_expr->name, search(ht, s->next_expr->name));
+		return stmt_evaluate(s->next);
 		//case STMT_IF_ELSE
 		//case STMT_WHILE
 		//case STMT_PRINT
 		//case STMT_RETURN
 		case STMT_BLOCK:
-			expr_evaluate(s->expr);
+		expr_evaluate(s->expr);
 	}
+	return 1;
 }
 
 int expr_evaluate (struct expr *e)
@@ -125,13 +135,10 @@ int expr_evaluate (struct expr *e)
 
 	switch(e->kind) {
 		case EXPR_INT_LITERAL:
-			printf("%d\n", e->integer_value);
-			return e->integer_value;
+		return e->integer_value;
 		case EXPR_NAME:
-			printf("%s\n", e->name);
-			return e->name;
+		return search(ht, e->name);
 		case EXPR_ADD:
-			printf("(+)\n");
 			return l+r;
 		case EXPR_SUB:
 			return l-r;
@@ -173,4 +180,10 @@ int expr_evaluate (struct expr *e)
 		case EXPR_GE:
 			return l >= r;
 	}
+}
+
+int run_interpreter (struct decl *d)
+{
+	ht = hashtable_init();
+	return decl_evaluate(d);
 }

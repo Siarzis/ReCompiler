@@ -96,7 +96,9 @@ struct expr * expr_create_int_literal(int i);
 struct expr * expr_create_string_literal(const char *str);
 struct type * create_type (type_token kind, struct type *subtype, struct param_list *parameters);
 struct param_list * create_parameters (char *name, struct type *type, struct param_list *next);
+int decl_evaluate (struct decl *d);
 int stmt_evaluate (struct stmt *s);
 int expr_evaluate (struct expr *e);
+
 
 #endif
