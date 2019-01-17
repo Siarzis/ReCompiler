@@ -1,0 +1,22 @@
+function () : proc
+	i : int;
+	j : int;
+	result : int;
+{
+	i = 2;
+	j = 6;
+	if (i >= j) {
+		result = i - j;
+	} else {
+		result = j - i;
+	}
+
+	while (j <= 9) {
+		if (i == 3) {
+			j = j + 1;
+		} else {
+			j = j + 2;
+		}
+	}
+	result = result * result;
+}
