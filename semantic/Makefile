@@ -1,13 +1,13 @@
 .PHONY: default clean
 
-CC=gcc
-CFLAGS=-I. -Wall
-DEPS = token.h ast.h hashtable.h
-OBJ = parser.o scanner.o ast.o hashtable.o
+CC = gcc
+CFLAGS = -I. -Wall
+DEPS = token.h ast.h symbol.h
+OBJ = parser.o scanner.o ast.o symbol.o
 
-default: interpreter clean
+default: semantic clean
 
-interpreter: $(OBJ)
+semantic: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 %.o: %.c $(DEPS)
