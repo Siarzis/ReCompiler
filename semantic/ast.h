@@ -1,6 +1,12 @@
 #ifndef __AST_H__
 #define __AST_H__
 
+typedef struct node {
+	char *name;
+    int value;
+    struct node *next;
+} list;
+
 /* define declarations data structure */
 
 struct decl {
