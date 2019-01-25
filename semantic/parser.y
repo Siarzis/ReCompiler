@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "ast.h"
-#include "hashtable.h"
+#include "symbol.h"
 
 extern int yylex();
 extern char *yytext;
@@ -116,7 +116,7 @@ local_def : /* empty */ { $$ = NULL; }
 	  | var_def local_def { $$ = $1; $1->next = $2; }
 	  ;
 
-var_def : T_ID ':' data_type opt_int_brackets ';'  { if ($4 == NULL) $$ = decl_create($1, $3, NULL, NULL, NULL); else {$4->subtype=$1; decl_create($1, $4, NULL, NULL, NULL);} }
+var_def : T_ID ':' data_type opt_int_brackets ';'  { if ($4 == NULL) $$ = decl_create($1, $3, NULL, NULL, NULL); else { $4->subtype=$3; $$ = decl_create($1, $4, NULL, NULL, NULL);} }
 	; 
 
 opt_int_brackets : /* empty */ { $$ = NULL; }
@@ -172,7 +172,7 @@ expr : T_CONST { $$ = expr_create_int_literal($1); }
      ;
 
 l_value : T_ID opt_expr_brackets { if ($2 == NULL) $$ = expr_create_name($1); else $$ = expr_create(EXPR_SUBSCRIPT, expr_create_name($1), $2); }
-	| T_STRING { $$ = expr_create_string_literal($1); }
+	| T_STRING { $$ = expr_create_name($1); }
 	;
 
 opt_expr_brackets : /* empty */ { $$ = NULL; }
@@ -209,7 +209,9 @@ int main()
 	yyin = fopen("input.txt","r");
 	if (yyparse()==0) {
 		printf("Parse successful!\n");
-		printf("Result: %d\n", run_interpreter(parser_result));
+		// printf("Result: %d\n", run_interpreter(parser_result));
+		decl_resolve(parser_result);
+		
 	} else {
 		printf("Parse failed.\n");
 	}
