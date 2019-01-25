@@ -1,11 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "symbol.h"
+
+Scope *currentScope = NULL;
 
 static item * item_init (const char *key, const struct symbol *value) {
 	item *i = malloc(sizeof(*i));
 	i->key = strdup(key);
-	i->value = strdup(value);
+	i->value = value;
 	return i;
 }
 
@@ -15,7 +18,7 @@ static void del_item(item* i) {
 	free(i);
 }
 
-hash_table * hashtable_init() {
+hash_table * hashtable_init() {	
 	hash_table *ht = malloc(sizeof(*ht));
 	ht->size = 53;
 	ht->count = 0;
@@ -35,7 +38,7 @@ static void del_hashtable(hash_table* ht) {
 }
 
 static int hash_function(const char *str, const int prime, const int size) {
-	long int hash;
+	long int hash = 0;
 	const int length = strlen(str);
 
 	for (int i = 0; i < length; i++) {
@@ -54,7 +57,7 @@ static int get_hash(const char *str, const int size, const int attempt) {
 	return (hash_a + (attempt * (hash_b + 1))) % size;
 }
 
-struct symbol * symbol_create(symbol_t kind, struct type *type, char *name) {
+struct symbol * symbol_create(symbol_token kind, struct type *type, char *name) {
 	struct symbol *s = malloc(sizeof(*s));
 	
 	s->kind = kind;
@@ -67,20 +70,22 @@ struct symbol * symbol_create(symbol_t kind, struct type *type, char *name) {
 void scope_enter() {
 	Scope *newScope = malloc(sizeof(*newScope));
 
-	newScope->prevScope = currentScope;
+	newScope->prevScope = currentScope;	
 	newScope->entries   = hashtable_init();
 
-	if (currentScope == NULL)
+	if (currentScope == NULL) {
 		newScope->level = 1;
-	else
+	}
+	else {
 		newScope->level = currentScope->level + 1;
+	}
 
 	currentScope = newScope;
 }
 
 void scope_exit() {
 
-	if (currentScope->entries != NULL) {
+	if (currentScope->entries) {
 		//SymbolEntry *next = currentScope->entries->nextInScope;
 
 		//hashTable[currentScope->entries->hashValue] = currentScope->entries->nextHash; 
@@ -94,18 +99,20 @@ void scope_exit() {
 };
 
 int scope_level() {
-	return currentScope->level;
+	if (currentScope)
+		return currentScope->level;
+	return 0;
 };
 
 void scope_bind (const char *var, struct symbol *sym) {
-	const hash_table *ht = currentScope->entries;
+	hash_table *ht = currentScope->entries;
 	int attempt = 1;
 
 	item *i = item_init(var, sym);
 	int index = get_hash(i->key, ht->size, 0);
 	item *cur_item = ht->items[index];
 
-	while (cur_item != NULL) {
+	while (cur_item) {
 		index = get_hash(i->key, ht->size, attempt);
 		cur_item = ht->items[index];
 		attempt++;
@@ -119,15 +126,16 @@ struct symbol * scope_lookup_current (const char *name) {
 	const hash_table *ht = currentScope->entries;
 	int attempt = 1;
 
-	int index = get_hash(name, ht->size, attempt);
+	int index = get_hash(name, ht->size, 0);
 	item *i = ht->items[index];
 
-	while (i != NULL) {
-		if (strcmp(i->name, name == 0)) {
-			return i->name;
+	while (i) {
+		if (strcmp(i->key, name) == 0) {
+			return i->value;
 		}
+
 		index = get_hash(name, ht->size, attempt);
-		item = ht->items[index];
+		i = ht->items[index];
 		attempt++;
 	}
 
@@ -135,11 +143,12 @@ struct symbol * scope_lookup_current (const char *name) {
 };
 
 struct symbol * scope_lookup (const char *name) {
-	hash_table *ht = currentScope->entries;
+	const hash_table *ht = currentScope->entries;
+	struct symbol *found = NULL;
 
-	while (ht != NULL) {
+	while (ht) {
 		found = scope_lookup_current(name);
-		if (found != NULL); {
+		if (found); {
 			return found;
 		}
 		ht = currentScope->prevScope;
